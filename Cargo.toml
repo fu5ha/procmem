@@ -1,0 +1,14 @@
+[package]
+name = "procmem"
+version = "0.0.1"
+authors = ["Gray Olson <gray@grayolson.com>"]
+edition = "2021"
+description = "Helpers to access other processes' memory on Windows"
+repository = "https://github.com/termhn/procmem"
+readme = "README.md"
+keywords = ["windows", "memory", "process", "game modding"]
+license = "MIT OR Apache-2.0 OR Zlib"
+
+[dependencies]
+windows = { version = "0.32", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_System_Diagnostics_Debug", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Memory"] }
+bitflags = "1.3"
