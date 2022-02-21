@@ -6,7 +6,7 @@ edition = "2021"
 description = "Helpers to access other processes' memory on Windows"
 repository = "https://github.com/termhn/procmem"
 readme = "README.md"
-keywords = ["windows", "memory", "process", "game modding"]
+keywords = ["windows", "memory", "process", "games"]
 license = "MIT OR Apache-2.0 OR Zlib"
 
 [dependencies]
