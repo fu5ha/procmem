@@ -12,12 +12,14 @@ use windows::{
 };
 
 bitflags::bitflags! {
+    /// The ways that a process may be accessed after it is opened.
     pub struct AccessRightsBits: u32 {
         const READ = Win32::System::Threading::PROCESS_VM_READ.0;
         const WRITE = Win32::System::Threading::PROCESS_VM_WRITE.0;
     }
 }
 
+/// Re-exports of `windows` types that are passed to [`Process::virtual_protect`]
 pub mod protect {
     pub use windows::Win32::System::Memory::{
         PAGE_PROTECTION_FLAGS, PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY,
@@ -26,6 +28,7 @@ pub mod protect {
     };
 }
 
+/// The ways that opening a process can fail
 pub enum OpenProcessNamedError {
     NotFound,
     WinErr(WinError),
@@ -37,6 +40,7 @@ impl From<WinError> for OpenProcessNamedError {
     }
 }
 
+/// The ways that a memory read or write can fail
 pub enum ProcessAccessError {
     InvalidRights,
     UnalignedPointer,
@@ -49,12 +53,14 @@ impl From<WinError> for ProcessAccessError {
     }
 }
 
+/// Basic information about a module loaded in a process.
 pub struct ModuleInfo {
     pub name: String,
     pub base_ptr: *mut u8,
     pub size: usize,
 }
 
+/// Represents a process that has been opened for modification.
 pub struct Process {
     pid: u32,
     handle: HANDLE,
@@ -102,7 +108,7 @@ impl Process {
         }
     }
 
-    /// Opens the process with the specified process id.
+    /// Opens the process with the specified process ID.
     pub fn open_process(pid: u32, accesses: AccessRightsBits) -> Result<Self, WinError> {
         let raw_handle = unsafe {
             use windows::Win32::System::Threading::*;
@@ -170,6 +176,8 @@ impl Process {
         })
     }
 
+    /// Refresh metadata about the modules loaded by this process. Call `self.modules()` to access the modules
+    /// after refreshing.
     pub fn refresh_modules(&mut self) -> Result<(), WinError> {
         self.modules.clear();
 
@@ -210,22 +218,30 @@ impl Process {
         Ok(())
     }
 
+    /// Get the process ID of this process
     pub fn pid(&self) -> u32 {
         self.pid
     }
 
+    /// Get the name of this process
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// Get info for the main module of this process. Use the base address of this module
+    /// as the base address for the process itself. Any pointers into the process should
+    /// be offset from this module's base address.
     pub fn main_module(&self) -> &ModuleInfo {
         &self.modules[0]
     }
 
+    /// Get a slice of all the modules loaded by the current process.
     pub fn modules(&self) -> &[ModuleInfo] {
         &self.modules
     }
 
+    /// Reads memory from the process.
+    /// 
     /// - `base_ptr` is an absolute pointer, not an offset from the process's base memory address.
     /// 
     /// # Safety
@@ -265,6 +281,8 @@ impl Process {
         }    
     }
 
+    /// Writes memory to the process.
+    /// 
     /// - `base_ptr` is an absolute pointer, not an offset from the process's base memory address.
     /// 
     /// # Safety
@@ -309,7 +327,7 @@ impl Process {
     /// 
     /// # Safety
     /// 
-    /// I don't know exactly how unsafe this is but you can probably brake shit with it so I'm leaving it unsafe, fight me.
+    /// I don't know exactly how unsafe this is but you can probably break shit with it so I'm leaving it unsafe, fight me.
     pub unsafe fn virtual_protect(
         &self,
         start_addr: *const c_void,
